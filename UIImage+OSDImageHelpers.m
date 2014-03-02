@@ -46,7 +46,7 @@
     
     int64_t count = CGImageSourceGetCount(source);
     NSTimeInterval totalTime = 0.0;
-    NSMutableArray *images = [NSMutableArray arrayWithCapacity:count];
+    NSMutableArray *images = [NSMutableArray arrayWithCapacity:(NSUInteger)count];
     
     for (NSUInteger i = 0; i < count; i++) { @autoreleasepool {
         CFDictionaryRef properties = CGImageSourceCopyPropertiesAtIndex(source, i, NULL);
