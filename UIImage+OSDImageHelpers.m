@@ -99,39 +99,42 @@
     
     BOOL hasBlur = blurRadius > FLT_EPSILON;
     if (hasBlur) {
-        UIGraphicsBeginImageContextWithOptions(self.size, NO, [[UIScreen mainScreen] scale]);
-        CGContextRef effectInContext = UIGraphicsGetCurrentContext();
-        CGContextScaleCTM(effectInContext, 1.0, -1.0);
-        CGContextTranslateCTM(effectInContext, 0, -self.size.height);
-        CGContextDrawImage(effectInContext, imageRect, [self CGImage]);
-        
-        vImage_Buffer effectInBuffer;
-        effectInBuffer.data     = CGBitmapContextGetData(effectInContext);
-        effectInBuffer.width    = CGBitmapContextGetWidth(effectInContext);
-        effectInBuffer.height   = CGBitmapContextGetHeight(effectInContext);
-        effectInBuffer.rowBytes = CGBitmapContextGetBytesPerRow(effectInContext);
-        
-        UIGraphicsBeginImageContextWithOptions(self.size, NO, [[UIScreen mainScreen] scale]);
-        CGContextRef effectOutContext = UIGraphicsGetCurrentContext();
-        vImage_Buffer effectOutBuffer;
-        effectOutBuffer.data     = CGBitmapContextGetData(effectOutContext);
-        effectOutBuffer.width    = CGBitmapContextGetWidth(effectOutContext);
-        effectOutBuffer.height   = CGBitmapContextGetHeight(effectOutContext);
-        effectOutBuffer.rowBytes = CGBitmapContextGetBytesPerRow(effectOutContext);
-        
-        if (hasBlur) {
-            CGFloat inputRadius = blurRadius * [[UIScreen mainScreen] scale];
-            uint32_t radius = floor(inputRadius * 3. * sqrt(2 * M_PI) / 4 + 0.5);
-            if (radius % 2 != 1) {
-                radius += 1;
+        @autoreleasepool {
+            UIGraphicsBeginImageContextWithOptions(self.size, NO, [[UIScreen mainScreen] scale]);
+            CGContextRef effectInContext = UIGraphicsGetCurrentContext();
+            CGContextScaleCTM(effectInContext, 1.0, -1.0);
+            CGContextTranslateCTM(effectInContext, 0, -self.size.height);
+            CGContextDrawImage(effectInContext, imageRect, [self CGImage]);
+            
+            vImage_Buffer effectInBuffer;
+            effectInBuffer.data     = CGBitmapContextGetData(effectInContext);
+            effectInBuffer.width    = CGBitmapContextGetWidth(effectInContext);
+            effectInBuffer.height   = CGBitmapContextGetHeight(effectInContext);
+            effectInBuffer.rowBytes = CGBitmapContextGetBytesPerRow(effectInContext);
+            
+            UIGraphicsBeginImageContextWithOptions(self.size, NO, [[UIScreen mainScreen] scale]);
+            CGContextRef effectOutContext = UIGraphicsGetCurrentContext();
+            vImage_Buffer effectOutBuffer;
+            effectOutBuffer.data     = CGBitmapContextGetData(effectOutContext);
+            effectOutBuffer.width    = CGBitmapContextGetWidth(effectOutContext);
+            effectOutBuffer.height   = CGBitmapContextGetHeight(effectOutContext);
+            effectOutBuffer.rowBytes = CGBitmapContextGetBytesPerRow(effectOutContext);
+            
+            if (hasBlur) {
+                CGFloat inputRadius = blurRadius * [[UIScreen mainScreen] scale];
+                uint32_t radius = floor(inputRadius * 3. * sqrt(2 * M_PI) / 4 + 0.5);
+                if (radius % 2 != 1) {
+                    radius += 1;
+                }
+                vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, radius, radius, 0, kvImageEdgeExtend);
+                vImageBoxConvolve_ARGB8888(&effectOutBuffer, &effectInBuffer, NULL, 0, 0, radius, radius, 0, kvImageEdgeExtend);
+                vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, radius, radius, 0, kvImageEdgeExtend);
             }
-            vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, radius, radius, 0, kvImageEdgeExtend);
-            vImageBoxConvolve_ARGB8888(&effectOutBuffer, &effectInBuffer, NULL, 0, 0, radius, radius, 0, kvImageEdgeExtend);
-            vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, radius, radius, 0, kvImageEdgeExtend);
+            
+            effectImage = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+            UIGraphicsEndImageContext();
         }
-        
-        effectImage = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
     }
     
     UIGraphicsBeginImageContextWithOptions(self.size, NO, [[UIScreen mainScreen] scale]);
